@@ -118,7 +118,7 @@ class Server {
 				}
 
 				writeln(clients.length);
-				clients.remove(cast(Offset) i);
+				clients.remove(i);
 				writeln(clients.length);
 			}
 		}
