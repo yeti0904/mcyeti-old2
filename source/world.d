@@ -22,11 +22,11 @@ class World {
 	WorldEntity[] entities;
 	Vec3          spawnPoint;
 
-	bool PlayerIDExists(ubyte id) {
+	bool playerIDExists(ubyte id) {
 		return entities.filter!((a) => a.id == id).count > 0;
 	}
 
-	bool PlayerIsInWorld(string name) {
+	bool playerIsInWorld(string name) {
 		foreach (entity ; entities) {
 			if (entity.isPlayer && (entity.playerClient.username == name)) {
 				return true;
@@ -35,7 +35,7 @@ class World {
 		return false;
 	}
 
-	ubyte GetPlayerID(string name) {
+	ubyte getPlayerID(string name) {
 		foreach (entity ; entities) {
 			if (entity.isPlayer && (entity.playerClient.username == name)) {
 				return entity.id;
@@ -44,19 +44,19 @@ class World {
 		return 0;
 	}
 
-	bool ValidBlock(short x, short y, short z) {
+	bool validBlock(short x, short y, short z) {
 		return (
 			(x > 0) && (y > 0) && (z > 0) &&
 			(x < w) && (y < h) && (z < l)
 		);
 	}
 
-	bool AddPlayer(Client* player, Server server) {
+	bool addPlayer(Client* player, Server server) {
 		// create an id for this player
 		ubyte i;
 		bool createdID = false;
 		for (i = 0; i < 255; ++i) {
-			bool res = PlayerIDExists(i);
+			bool res = playerIDExists(i);
 			if (!res) {
 				entities ~= WorldEntity(
 					i, spawnPoint.x, spawnPoint.y, spawnPoint.y, 0, 0,
@@ -81,8 +81,8 @@ class World {
 				id = i;
 			}
 
-			if (PlayerIsInWorld(client.username)) {
-				client.socket.send(SToC_SpawnPlayer(
+			if (playerIsInWorld(client.username)) {
+				client.socket.send(stoc_SpawnPlayer(
 					player.username, id,
 					spawnPoint.x, spawnPoint.y, spawnPoint.z, 0, 0
 				));
@@ -92,7 +92,7 @@ class World {
 		return true;
 	}
 
-	void Generate(const string pname, const short pw, const short ph, const short pl) {
+	void generate(const string pname, const short pw, const short ph, const short pl) {
 		name   = pname;
 		w      = pw;
 		h      = ph;
@@ -112,24 +112,24 @@ class World {
 		spawnPoint = Vec3(w / 2, (h / 2) + 1, l / 2);
 	}
 
-	ubyte[] Serialise() {
-		ubyte[] serialised;
-		serialised ~= nativeToBigEndian(cast(uint) (w * h * l));
+	ubyte[] serialize() {
+		ubyte[] serialized;
+		serialized ~= nativeToBigEndian(cast(uint) (w * h * l));
 		for (short y = 0; y < h; ++y) {
 			for (short z = 0; z < l; ++z) {
 				for (short x = 0; x < w; ++x) {
-					serialised ~= blocks[z][y][x];
+					serialized ~= blocks[z][y][x];
 				}
 			}
 		}
 
 		auto compressor  = new Compress(HeaderFormat.gzip);
-		auto compressed  = compressor.compress(serialised);
+		auto compressed  = compressor.compress(serialized);
 		compressed      ~= compressor.flush();
 		return cast(ubyte[]) compressed;
 	}
 
-	size_t Volume() {
+	size_t volume() {
 		return w * h * l;
 	}
 }

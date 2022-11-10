@@ -8,24 +8,24 @@ import heartbeat;
 import tickCounter;
 
 void main() {
-	Util_Log("Welcome to %s made by %s", appName, appAuthor);
+	util_Log("Welcome to %s made by %s", appName, appAuthor);
 	
 	Server server = new Server();
-	server.LoadConfig();
-	server.Init();
+	server.loadConfig();
+	server.start();
 
 	while (server.running) {
-		server.UpdateSockets();
-		server.UpdateClients();
+		server.updateSockets();
+		server.updateClients();
 
-		if (GetTicks() % 1200 == 0) {
-			DoHeartbeat(server);
+		if (getTicks() % 1200 == 0) {
+			doHeartbeat(server);
 		}
-		if (GetTicks() % 20 == 0) {
-			server.KickDisconnectedClients();
+		if (getTicks() % 20 == 0) {
+			server.kickDisconnectedClients();
 		}
 		
 		Thread.sleep(dur!("msecs")(50)); // 50ms delay
-		IncrementTicks();
+		incrementTicks();
 	}
 }

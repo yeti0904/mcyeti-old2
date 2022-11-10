@@ -6,7 +6,7 @@ import std.net.curl;
 import server;
 import util;
 
-void DoHeartbeat(Server server) {
+void doHeartbeat(Server server) {
 	static bool first = true;
 	
 	string url = format(
@@ -23,13 +23,13 @@ void DoHeartbeat(Server server) {
 	try {
 		serverURL = get(url).idup();
 	}
-	catch (Throwable e) {
+	catch (CurlException e) {
 		stderr.writefln("URL: %s", url);
 		stderr.writeln(e);
 	}
 	
 	if (first) {
-	    Util_Log("Server URL: %s", serverURL);
+	    util_Log("Server URL: %s", serverURL);
 	    first = false;
 	}
 }

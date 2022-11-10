@@ -1,9 +1,9 @@
 static uint ticks = 0;
 
-void IncrementTicks() {
+void incrementTicks() {
 	++ ticks;
 }
 
-int GetTicks() {
+int getTicks() {
 	return ticks;
 }

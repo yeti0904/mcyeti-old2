@@ -12,7 +12,7 @@ struct ServerConfig {
 	string name;
 }
 
-ServerConfig CreateConfig(string jsonConfig) {
+ServerConfig createConfig(string jsonConfig) {
 	ServerConfig ret;
 	JSONValue    config;
 	
@@ -26,7 +26,7 @@ ServerConfig CreateConfig(string jsonConfig) {
 		ret.publicServer = config["public"].boolean;
 		ret.name         = config["name"].str;
 	}
-	catch (Throwable e) {
+	catch (JSONException e) {
 		stderr.writefln("Failed to load json: %s\n%s", e.msg, e.info);
 		exit(1);
 	}
@@ -34,7 +34,7 @@ ServerConfig CreateConfig(string jsonConfig) {
 	return ret;
 }
 
-string ConfigToJSON(ServerConfig* config) {
+string configToJSON(ServerConfig* config) {
 	return format(
 		`{
 	"name": "%s",

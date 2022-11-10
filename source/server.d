@@ -32,7 +32,7 @@ class Server {
 		running     = true;
 		
 		config.ip           = "localhost";
-		config.port         = 25565;
+		config.port         = 25_565;
 		config.heartbeatURL = "https://www.classicube.net/server/heartbeat";
 		config.maxPlayers   = 50;
 		config.publicServer = true;
@@ -47,7 +47,7 @@ class Server {
 		writeln("Exit");
 	}
 
-	void Init() {
+	void start() {
 		socket          = new Socket(AddressFamily.INET, SocketType.STREAM);
 		socket.blocking = false; // this is a single threaded server so
 		socket.setOption(SocketOptionLevel.SOCKET, SocketOption.REUSEADDR, 1);
@@ -58,55 +58,55 @@ class Server {
 
 		socket.bind(new InternetAddress(config.ip, config.port));
 		socket.listen(10);
-		Util_Log("Running server on port %s", config.port);
+		util_Log("Running server on port %s", config.port);
 
 		loadedWorlds ~= new World();
-		loadedWorlds[0].Generate("main", 128, 128, 128);
-		Util_Log("Generated world %s", loadedWorlds[0].name);
+		loadedWorlds[0].generate("main", 128, 128, 128);
+		util_Log("generated world %s", loadedWorlds[0].name);
 	}
 
-	void LoadConfig() {
+	void loadConfig() {
 		string configPath = dirName(thisExePath()) ~ "/server.json";
 		if (exists(configPath)) {
-			config = CreateConfig(readText(configPath));
+			config = createConfig(readText(configPath));
 		}
 		else {
-			std.file.write(configPath, ConfigToJSON(&config));
+			std.file.write(configPath, configToJSON(&config));
 		}
 	}
 
-	void SendMessageToClient(Client* client, string message) {
-		client.socket.send(SToC_Message(message));
+	void sendMessageToClient(Client* client, string message) {
+		client.socket.send(stoc_Message(message));
 	}
 
-	void SendGlobalMessage(string message) {
+	void sendGlobalMessage(string message) {
 		foreach (ref client ; clients) {
-			SendMessageToClient(&client, message);
+			sendMessageToClient(&client, message);
 		}
-		Util_Log("%s", message);
+		util_Log("%s", message);
 	}
 
-	void SendPlayerToWorld(Client* client, World world) {
+	void sendPlayerToWorld(Client* client, World world) {
 		client.world = world;
-		client.socket.send(SToC_SendWorld(world));
+		client.socket.send(stoc_SendWorld(world));
 
-		if (world.AddPlayer(client, this)) {
-			SendGlobalMessage(client.username ~ " went to " ~ world.name);
+		if (world.addPlayer(client, this)) {
+			sendGlobalMessage(client.username ~ " went to " ~ world.name);
 		}
 		else {
-			SendMessageToClient(client, "&cWorld is full");
+			sendMessageToClient(client, "&cWorld is full");
 		}
 	}
 
-	void SendBlockUpdatesToWorld(string worldName, short x, short y, short z, byte block) {
+	void sendBlockUpdatesToWorld(string worldName, short x, short y, short z, byte block) {
 		foreach (client ; clients) {
 			if (client.world.name == worldName) {
-				client.socket.send(SToC_SetBlock(x, y, z, block));
+				client.socket.send(stoc_SetBlock(x, y, z, block));
 			}
 		}
 	}
 
-	void KickDisconnectedClients() {
+	void kickDisconnectedClients() {
 		for (size_t i = 0; i < clients.length; ++i) {
 			if (
 				clients[i].socket.send([cast(ubyte) SToCPacketID.Ping])
@@ -114,7 +114,7 @@ class Server {
 			) {
 				// client is no longer connected
 				if (clients[i].authenticated) {
-					SendGlobalMessage("&e" ~ clients[i].username ~ " left the game");
+					sendGlobalMessage("&e" ~ clients[i].username ~ " left the game");
 				}
 
 				writeln(clients.length);
@@ -124,7 +124,7 @@ class Server {
 		}
 	}
 
-	void UpdateSockets() {
+	void updateSockets() {
 		serverSet.reset();
 		clientSet.reset();
 
@@ -140,7 +140,7 @@ class Server {
 		try {
 			newClient = socket.accept();
 		}
-		catch (Throwable) {
+		catch (SocketAcceptException) {
 			success = false;
 		}
 
@@ -148,7 +148,7 @@ class Server {
 			newClient.blocking  = false;
 			clients            ~= Client(newClient, []);
 			clientSet.add(newClient);
-			Util_Log(
+			util_Log(
 				"%s connected to the server, now %d clients connected",
 				newClient.localAddress.toAddrString(),
 				clients.length
@@ -172,7 +172,7 @@ class Server {
 		}
 	}
 
-	void UpdateClients() {
+	void updateClients() {
 		foreach (ref client ; clients) {
 			if (client.inBuffer.length == 0) {
 				continue;
@@ -190,12 +190,12 @@ class Server {
 					client.username      = packet.username;
 					client.authenticated = true;
 
-					client.socket.send(SToC_ServerIdentification(config));
+					client.socket.send(stoc_ServerIdentification(config));
 					
-					SendGlobalMessage("&e" ~ client.username ~ " joined the game");
+					sendGlobalMessage("&e" ~ client.username ~ " joined the game");
 
 					// send them to main world
-					SendPlayerToWorld(&client, loadedWorlds[0]);
+					sendPlayerToWorld(&client, loadedWorlds[0]);
 
 					client.inBuffer = client.inBuffer[size .. $];
 					break;
@@ -208,12 +208,12 @@ class Server {
 
 					auto packet = new CToS_SetBlock(client.inBuffer[0 .. size]);
 
-					if (client.world.ValidBlock(packet.x, packet.y, packet.z)) {
+					if (client.world.validBlock(packet.x, packet.y, packet.z)) {
 						byte blockID = packet.mode == 0x00? 0 : packet.block;
 						client.world.blocks[packet.z][packet.y][packet.x] = blockID;
 
 						// send updates to other players
-						SendBlockUpdatesToWorld(
+						sendBlockUpdatesToWorld(
 							client.world.name, packet.x, packet.y, packet.z, blockID
 						);
 					}
@@ -238,7 +238,7 @@ class Server {
 
 					auto packet = new CToS_Message(client.inBuffer[0 .. size]);
 
-					SendGlobalMessage(client.username ~ ": " ~ packet.message);
+					sendGlobalMessage(client.username ~ ": " ~ packet.message);
 
 					client.inBuffer = client.inBuffer[size .. $];
 					break;

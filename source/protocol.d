@@ -6,11 +6,11 @@ import core.stdc.stdlib;
 import world;
 import serverConfig;
 
-string StringFromBytes(char[64] bytes) {
+string stringFromBytes(char[64] bytes) {
 	return cast(string) strip(bytes).idup();
 }
 
-char[64] BytesFromString(string str) {
+char[64] bytesFromString(string str) {
 	char[64] ret  = ' ';
 	auto len      = min(64, str.length);
 	ret[0 .. len] = str[0 .. len];
@@ -72,8 +72,8 @@ class CToS_PlayerIdentification {
 		}
 		id              = bytes[0];
 		protocolVersion = bytes[1];
-		username        = StringFromBytes(cast(char[64]) bytes[2 .. 66]);
-		mppass          = StringFromBytes(cast(char[64]) bytes[66 .. 130]);
+		username        = stringFromBytes(cast(char[64]) bytes[2 .. 66]);
+		mppass          = stringFromBytes(cast(char[64]) bytes[66 .. 130]);
 		unused          = bytes[130];
 	}
 }
@@ -110,17 +110,17 @@ class CToS_Message {
 		}
 		id       = bytes[0];
 		playerID = bytes[1];
-		message  = StringFromBytes(cast(char[64]) bytes[2 .. 66]);
+		message  = stringFromBytes(cast(char[64]) bytes[2 .. 66]);
 	}
 }
 
-byte[] SToC_ServerIdentification(ServerConfig config) {
+byte[] stoc_ServerIdentification(ServerConfig config) {
 	byte[] toSend;
 
 	toSend ~= SToCPacketID.ServerIdentification;
 	toSend ~= 0x07; // protocol version;
-	toSend ~= BytesFromString(config.name); // server name
-	toSend ~= BytesFromString("Welcome"); // motd
+	toSend ~= bytesFromString(config.name); // server name
+	toSend ~= bytesFromString("Welcome"); // motd
 	toSend ~= 0x00; // user type (not op)
 
 	assert(toSend.length == SToCPacketSize.ServerIdentification);
@@ -128,14 +128,14 @@ byte[] SToC_ServerIdentification(ServerConfig config) {
 	return toSend;
 }
 
-byte[] SToC_SendWorld(World world) {
+byte[] stoc_SendWorld(World world) {
 	byte[] toSend;
 
 	// level initialise packet
 	toSend ~= SToCPacketID.LevelInitialise;
 
 	// send chunks of data
-	ubyte[] data = world.Serialise();
+	ubyte[] data = world.serialize();
 	bool    finished = false;
 	size_t  bytesSent = 0;
 	while (!finished) {
@@ -153,7 +153,7 @@ byte[] SToC_SendWorld(World world) {
 		toSend ~= nativeToBigEndian(cast(short) chunkLen);
 		toSend ~= chunk;
 		toSend ~= cast(ubyte)
-			((cast(float) bytesSent / cast(float) world.Volume()) * 100); // %
+			((cast(float) bytesSent / cast(float) world.volume()) * 100); // %
 	}
 
 	// level finalise packet
@@ -167,7 +167,7 @@ byte[] SToC_SendWorld(World world) {
 	return toSend;
 }
 
-byte[] SToC_SetBlock(short x, short y, short z, byte block) {
+byte[] stoc_SetBlock(short x, short y, short z, byte block) {
 	byte[] data;
 
 	data ~= SToCPacketID.SetBlock;
@@ -181,14 +181,14 @@ byte[] SToC_SetBlock(short x, short y, short z, byte block) {
 	return data;
 }
 
-byte[] SToC_SpawnPlayer(
+byte[] stoc_SpawnPlayer(
 	string name, byte playerID, short x, short y, short z, byte yaw, byte pitch
 ) {
 	byte[] data;
 
 	data ~= SToCPacketID.SpawnPlayer;
 	data ~= playerID;
-	data ~= BytesFromString(name);
+	data ~= bytesFromString(name);
 	data ~= nativeToBigEndian(cast(short) (x * 32));
 	data ~= nativeToBigEndian(cast(short) (y * 32));
 	data ~= nativeToBigEndian(cast(short) (z * 32));
@@ -200,11 +200,11 @@ byte[] SToC_SpawnPlayer(
 	return data;
 }
 
-byte[] SToC_Message(string message) {
+byte[] stoc_Message(string message) {
 	byte[] ret;
 	ret ~= SToCPacketID.Message;
 	ret ~= 69;
-	ret ~= BytesFromString(message);
+	ret ~= bytesFromString(message);
 
 	assert(ret.length == SToCPacketSize.Message);
 
