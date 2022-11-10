@@ -115,11 +115,24 @@ class Server {
 				// client is no longer connected
 				if (clients[i].authenticated) {
 					SendGlobalMessage("&e" ~ clients[i].username ~ " left the game");
+					for (size_t j = 0; j < clients.length; ++j) {
+						if (
+							(i == j) ||
+							(clients[j].world.name != clients[i].world.name)
+						) {
+							continue;
+						}
+
+						clients[j].socket.send(
+							SToC_DespawnPlayer(clients[i].world.GetPlayerID(
+								clients[j].username)
+							)
+						);
+					}
 				}
 
-				writeln(clients.length);
-				clients.remove(i);
-				writeln(clients.length);
+
+				clients = clients.remove(i);
 			}
 		}
 	}

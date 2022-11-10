@@ -200,6 +200,17 @@ byte[] SToC_SpawnPlayer(
 	return data;
 }
 
+byte[] SToC_DespawnPlayer(byte id) {
+	byte[] data;
+
+	data ~= SToCPacketID.DespawnPlayer;
+	data ~= id;
+
+	assert(data.length == SToCPacketSize.DespawnPlayer);
+
+	return data;
+}
+
 byte[] SToC_Message(string message) {
 	byte[] ret;
 	ret ~= SToCPacketID.Message;
