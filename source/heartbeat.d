@@ -10,7 +10,7 @@ void DoHeartbeat(Server server) {
 	static bool first = true;
 	
 	string url = format(
-	    "%s?name=%s&port=%d&users=%d&max=%d&salt=blablabla&public=%s",
+	    "%s?name=%s&port=%d&users=%d&max=%d&salt=blablabla&public=%s&server=MCYeti",
 	    server.config.heartbeatURL,
 	    encodeComponent(server.config.name),
 	    server.config.port,
