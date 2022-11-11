@@ -107,7 +107,7 @@ class World {
 		w      = pw;
 		h      = ph;
 		l      = pl;
-		blocks = new ubyte[][][](pw, ph, pl);
+		blocks = new ubyte[][][](pw, ph, pl); 
 		for (short x = 0; x < w; ++x) {
 			for (short y = 0; y < h; ++y) {
 				for (short z = 0; z < l; ++z) {
