@@ -130,10 +130,12 @@ class Server {
 		foreach (i, ref client ; clients) {
 			if (client.authenticated && (client.username == name)) {
 				client.socket.send(SToC_DisconnectPlayer(reason));
-
+				
 				SendGlobalMessage(
 					"&e" ~ clients[i].username ~ " was kicked: " ~ reason
 				);
+
+				client.world.RemovePlayer(clients[i].username);
 
 				clients = clients.remove(i);
 				return;
@@ -174,20 +176,8 @@ class Server {
 				// client is no longer connected
 				if (clients[i].authenticated) {
 					SendGlobalMessage("&e" ~ clients[i].username ~ " left the game");
-					for (size_t j = 0; j < clients.length; ++j) {
-						if (
-							(i == j) ||
-							(clients[j].world.name != clients[i].world.name)
-						) {
-							continue;
-						}
 
-						clients[j].socket.send(
-							SToC_DespawnPlayer(clients[i].world.GetPlayerID(
-								clients[i].username)
-							)
-						);
-					}
+					clients[i].world.RemovePlayer(clients[i].username);
 				}
 
 

@@ -61,6 +61,22 @@ class World {
 		);
 	}
 
+	void RemovePlayer(string name) {
+		WorldEntity dead;
+		foreach (i, ref entity ; entities) {
+			if (entity.isPlayer && (entity.name == name)) {
+				dead = entity;
+				entities = entities.remove(i);
+			}
+		}
+
+		foreach (ref entity ; entities) {
+			if (entity.isPlayer) {
+				entity.playerClient.socket.send(SToC_DespawnPlayer(dead.id));
+			}
+		}
+	}
+
 	bool AddPlayer(Client* player, Server server) {
 		// create an id for this player
 		ubyte i;
