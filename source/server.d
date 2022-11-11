@@ -153,6 +153,18 @@ class Server {
 		return ips.length;
 	}
 
+	ulong GetAmountOfThisIP(string ip) {
+		ulong ret = 0;
+
+		foreach (client ; clients) {
+			if (client.ip == ip) {
+				++ ret;
+			}
+		}
+
+		return ret;
+	}
+
 	void KickDisconnectedClients() {
 		for (size_t i = 0; i < clients.length; ++i) {
 			if (
@@ -209,6 +221,11 @@ class Server {
 		}
 
 		if (success) {
+			if (GetAmountOfThisIP(newClientSocket.remoteAddress.toAddrString()) > 5) {
+				return;
+			}
+
+		
 			newClientSocket.blocking = false;
 			
 			Client newClient;
