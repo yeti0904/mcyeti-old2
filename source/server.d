@@ -204,9 +204,13 @@ class Server {
 	}
 
 	void UpdateClients() {
-		foreach (ref client ; clients) {
+		foreach (i, ref client ; clients) {
 			if (client.inBuffer.length == 0) {
 				continue;
+			}
+			if (client.inBuffer.length > 256) {
+				clients = clients.remove(i);
+				return;
 			}
 			switch (client.inBuffer[0]) {
 				case CToSPacketID.PlayerIdentification: {
@@ -304,6 +308,8 @@ class Server {
 						"[ERROR] %s sent invalid packet id %d",
 						client.socket.localAddress.toAddrString(), client.inBuffer[0]
 					);
+					clients = clients.remove(i);
+					return;
 				}
 			}
 		}
