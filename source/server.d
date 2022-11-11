@@ -296,7 +296,7 @@ class Server {
 						continue;
 					}
 
-					if (GetTicks() - client.ticksAtLastBlockUpdate < 10) {
+					if (GetTicks() - client.ticksAtLastBlockUpdate < 5) {
 						KickPlayer(client.username, "Kicked by antigrief, slow down");
 						return;
 					}
