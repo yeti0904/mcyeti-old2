@@ -25,7 +25,7 @@ void main() {
 			server.KickDisconnectedClients();
 		}
 		
-		Thread.sleep(dur!("msecs")(50)); // 50ms delay
+		Thread.sleep(dur!("msecs")(10)); // 100tps
 		IncrementTicks();
 	}
 }
