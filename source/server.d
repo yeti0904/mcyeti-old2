@@ -279,10 +279,12 @@ class Server {
 						continue;
 					}
 
-					if (GetTicks() - client.ticksAtLastBlockUpdate < 20) {
+					if (GetTicks() - client.ticksAtLastBlockUpdate < 10) {
 						KickPlayer(client.username, "Kicked by antigrief, slow down");
 						return;
 					}
+
+					client.ticksAtLastBlockUpdate = GetTicks();
 
 					auto packet = new CToS_SetBlock(client.inBuffer[0 .. size]);
 
