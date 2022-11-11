@@ -166,36 +166,42 @@ class Server {
 	}
 
 	void KickDisconnectedClients() {
-		for (size_t i = 0; i < clients.length; ++i) {
-			if (
-				clients[i].socket.send([cast(ubyte) SToCPacketID.Ping])
-				== Socket.ERROR
-			) {
-				// client is no longer connected
-				if (clients[i].authenticated) {
-					SendGlobalMessage("&e" ~ clients[i].username ~ " left the game");
-					for (size_t j = 0; j < clients.length; ++j) {
-						if (
-							(i == j) ||
-							(clients[j].world.name != clients[i].world.name)
-						) {
-							continue;
+		bool done = false;
+		while (!done) {
+			done = true;
+			for (size_t i = 0; i < clients.length; ++i) {
+				if (
+					clients[i].socket.send([cast(ubyte) SToCPacketID.Ping])
+					== Socket.ERROR
+				) {
+					// client is no longer connected
+					if (clients[i].authenticated) {
+						SendGlobalMessage("&e" ~ clients[i].username ~ " left the game");
+						for (size_t j = 0; j < clients.length; ++j) {
+							if (
+								(i == j) ||
+								(clients[j].world.name != clients[i].world.name)
+							) {
+								continue;
+							}
+
+							clients[j].socket.send(
+								SToC_DespawnPlayer(clients[i].world.GetPlayerID(
+									clients[i].username)
+								)
+							);
 						}
-
-						clients[j].socket.send(
-							SToC_DespawnPlayer(clients[i].world.GetPlayerID(
-								clients[i].username)
-							)
-						);
 					}
+
+
+					clients = clients.remove(i);
+					Util_Log(
+						"Now %d clients connected, and %d IPs connected",
+						clients.length, GetConnectedIPs()
+					);
+					done = false;
+					break;
 				}
-
-
-				clients = clients.remove(i);
-				Util_Log(
-					"Now %d clients connected, and %d IPs connected",
-					clients.length, GetConnectedIPs()
-				);
 			}
 		}
 	}
