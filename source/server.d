@@ -166,6 +166,7 @@ class Server {
 	}
 
 	void KickDisconnectedClients() {
+		loop:
 		for (size_t i = 0; i < clients.length; ++i) {
 			if (
 				clients[i].socket.send([cast(ubyte) SToCPacketID.Ping])
@@ -196,7 +197,7 @@ class Server {
 					"Now %d clients connected, and %d IPs connected",
 					clients.length, GetConnectedIPs()
 				);
-				-- i;
+				goto loop;
 			}
 		}
 	}
