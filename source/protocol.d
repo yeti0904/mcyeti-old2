@@ -66,10 +66,8 @@ class CToS_PlayerIdentification {
 	ubyte  unused;
 
 	this(ubyte[] bytes) {
-		if (bytes.length > CToSPacketSize.PlayerIdentification) {
-			stderr.writefln("CToS_PlayerIdentification: Too many bytes (%d)", bytes.length);
-			exit(1);
-		}
+		assert(bytes.length == CToSPacketSize.PlayerIdentification);
+		
 		id              = bytes[0];
 		protocolVersion = bytes[1];
 		username        = StringFromBytes(cast(char[64]) bytes[2 .. 66]);
@@ -84,10 +82,7 @@ class CToS_SetBlock {
 	byte  mode, block;
 
 	this(ubyte[] bytes) {
-		if (bytes.length > CToSPacketSize.SetBlock) {
-			stderr.writefln("CToS_SetBlock: Too many bytes (%d)", bytes.length);
-			exit(1);
-		}
+		assert(bytes.length == CToSPacketSize.SetBlock);
 
 		id    = bytes[0];
 		x     = bigEndianToNative!short(bytes[1 .. 3]);
@@ -98,16 +93,33 @@ class CToS_SetBlock {
 	}
 }
 
+class CToS_PositionOrientation {
+	byte  id;
+	byte  playerID;
+	short x, y, z;
+	byte  yaw, pitch;
+
+	this(ubyte[] bytes) {
+		assert(bytes.length == CToSPacketSize.PositionOrientation);
+
+		id = bytes[0];
+		playerID = bytes[1];
+		x        = bigEndianToNative!short(bytes[2 .. 4]);
+		y        = bigEndianToNative!short(bytes[4 .. 6]);
+		z        = bigEndianToNative!short(bytes[6 .. 8]);
+		yaw      = bytes[8];
+		pitch    = bytes[9];
+	}
+}
+
 class CToS_Message {
 	ubyte  id;
 	byte   playerID;
 	string message;
 
 	this(ubyte[] bytes) {
-		if (bytes.length > CToSPacketSize.Message) {
-			stderr.writefln("CToS_Message: Too many bytes (%d)", bytes.length);
-			exit(1);
-		}
+		assert(bytes.length == CToSPacketSize.Message);
+		
 		id       = bytes[0];
 		playerID = bytes[1];
 		message  = StringFromBytes(cast(char[64]) bytes[2 .. 66]);
@@ -182,7 +194,7 @@ byte[] SToC_SetBlock(short x, short y, short z, byte block) {
 }
 
 byte[] SToC_SpawnPlayer(
-	string name, byte playerID, short x, short y, short z, byte yaw, byte pitch
+	string name, byte playerID, float x, float y, float z, byte yaw, byte pitch
 ) {
 	byte[] data;
 
@@ -196,6 +208,24 @@ byte[] SToC_SpawnPlayer(
 	data ~= pitch;
 
 	assert(data.length == SToCPacketSize.SpawnPlayer);
+
+	return data;
+}
+
+byte[] SToC_SetPositionOrientation(
+	byte playerID, float x, float y, float z, byte yaw, byte pitch
+) {
+	byte[] data;
+
+	data ~= SToCPacketID.SetPositionOrientation;
+	data ~= playerID;
+	data ~= nativeToBigEndian(cast(short) (x * 32));
+	data ~= nativeToBigEndian(cast(short) (y * 32));
+	data ~= nativeToBigEndian(cast(short) (z * 32));
+	data ~= yaw;
+	data ~= pitch;
+
+	assert(data.length == SToCPacketSize.SetPositionOrientation);
 
 	return data;
 }

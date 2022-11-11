@@ -8,11 +8,12 @@ import protocol;
 
 struct WorldEntity {
 	ubyte id;
-	short x, y, z;
+	float x, y, z;
 	byte  yaw, pitch;
 
 	bool    isPlayer;
 	Client* playerClient;
+	string  name;
 }
 
 class World {
@@ -44,6 +45,15 @@ class World {
 		return 255;
 	}
 
+	WorldEntity* GetPlayer(string name) {
+		foreach (ref entity ; entities) {
+			if (entity.isPlayer && (entity.playerClient.username == name)) {
+				return &entity;
+			}
+		}
+		return null;
+	}
+
 	bool ValidBlock(short x, short y, short z) {
 		return (
 			(x > 0) && (y > 0) && (z > 0) &&
@@ -60,7 +70,7 @@ class World {
 			if (!res) {
 				entities ~= WorldEntity(
 					i, spawnPoint.x, spawnPoint.y, spawnPoint.y, 0, 0,
-					true, player
+					true, player, player.username
 				);
 				createdID = true;
 				break;

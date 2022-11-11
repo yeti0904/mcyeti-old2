@@ -91,6 +91,23 @@ class Server {
 		client.socket.send(SToC_SendWorld(world));
 
 		if (world.AddPlayer(client, this)) {
+			// send entities to the player
+			for (size_t i = 0; i < clients.length; ++i) {
+				if (
+					(clients[i].authenticated) &&
+					(clients[i].username != client.username) &&
+					(clients[i].world.name == world.name)
+				) {
+					WorldEntity* entity = world.GetPlayer(clients[i].username);
+					auto data = SToC_SpawnPlayer(
+						entity.name, entity.id,
+						entity.x, entity.y, entity.z,
+						entity.yaw, entity.pitch
+					);
+					client.socket.send(data);
+				}
+			}
+		
 			SendGlobalMessage(client.username ~ " went to " ~ world.name);
 		}
 		else {
@@ -133,6 +150,7 @@ class Server {
 
 
 				clients = clients.remove(i);
+				Util_Log("Now %d clients connected", clients.length);
 			}
 		}
 	}
@@ -238,6 +256,31 @@ class Server {
 					const ulong size = CToSPacketSize.PositionOrientation;
 					if (client.inBuffer.length < size) {
 						continue;
+					}
+
+					auto packet = new CToS_PositionOrientation(client.inBuffer[0 .. size]);
+					auto clientEntity = client.world.GetPlayer(client.username);
+
+					clientEntity.x     = cast(float) (packet.x) / 32;
+					clientEntity.y     = cast(float) (packet.y) / 32;
+					clientEntity.z     = cast(float) (packet.z) / 32;
+					clientEntity.yaw   = packet.yaw;
+					clientEntity.pitch = packet.pitch;
+
+					if (client.world !is null) {
+						foreach (ref entity ; client.world.entities) {
+							if (entity.isPlayer) {
+								entity.playerClient.socket.send(
+									SToC_SetPositionOrientation(
+										clientEntity.id,
+										clientEntity.x,
+										clientEntity.y,
+										clientEntity.z,
+										clientEntity.yaw,    clientEntity.pitch
+									)
+								);
+							}
+						}
 					}
 
 					client.inBuffer = client.inBuffer[size .. $];
