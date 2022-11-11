@@ -9,6 +9,7 @@ import protocol;
 import world;
 import serverConfig;
 import types;
+import tickCounter;
 
 struct Client {
 	Socket  socket;
@@ -17,6 +18,8 @@ struct Client {
 	bool    loadedInWorld;
 	World   world;
 	bool    authenticated;
+	string  ip;
+	uint    ticksAtLastBlockUpdate;
 }
 
 class Server {
@@ -29,17 +32,17 @@ class Server {
 	World[]      loadedWorlds;
 
 	this() {
-		running     = true;
+		running = true;
 		
-		config.ip           = "localhost";
+		config.ip           = "0.0.0.0";
 		config.port         = 25565;
 		config.heartbeatURL = "https://www.classicube.net/server/heartbeat";
 		config.maxPlayers   = 50;
 		config.publicServer = true;
-		config.name         = "MCYeti dev";
+		config.name         = "[MCYeti] Default";
 		
-		serverSet   = new SocketSet();
-		clientSet   = new SocketSet();
+		serverSet = new SocketSet();
+		clientSet = new SocketSet();
 	}
 
 	~this() {
@@ -123,6 +126,33 @@ class Server {
 		}
 	}
 
+	void KickPlayer(string name, string reason) {
+		foreach (i, ref client ; clients) {
+			if (client.authenticated && (client.username == name)) {
+				client.socket.send(SToC_DisconnectPlayer(reason));
+
+				SendGlobalMessage(
+					"&e" ~ clients[i].username ~ " was kicked: " ~ reason
+				);
+
+				clients = clients.remove(i);
+				return;
+			}
+		}
+	}
+
+	ulong GetConnectedIPs() {
+		string[] ips;
+
+		foreach (client ; clients) {
+			if (!ips.canFind(client.ip)) {
+				ips ~= client.ip;
+			}
+		}
+
+		return ips.length;
+	}
+
 	void KickDisconnectedClients() {
 		for (size_t i = 0; i < clients.length; ++i) {
 			if (
@@ -150,7 +180,10 @@ class Server {
 
 
 				clients = clients.remove(i);
-				Util_Log("Now %d clients connected", clients.length);
+				Util_Log(
+					"Now %d clients connected, and %d IPs connected",
+					clients.length, GetConnectedIPs()
+				);
 			}
 		}
 	}
@@ -167,22 +200,27 @@ class Server {
 		}
 		
 		bool   success = true;
-		Socket newClient;
+		Socket newClientSocket;
 		try {
-			newClient = socket.accept();
+			newClientSocket = socket.accept();
 		}
 		catch (Throwable) {
 			success = false;
 		}
 
 		if (success) {
-			newClient.blocking  = false;
-			clients            ~= Client(newClient, []);
-			clientSet.add(newClient);
+			newClientSocket.blocking = false;
+			
+			Client newClient;
+			newClient.socket = newClientSocket;
+			newClient.ip     = newClientSocket.remoteAddress.toAddrString();
+			
+			clients ~= newClient;
+			clientSet.add(newClientSocket);
 			Util_Log(
-				"%s connected to the server, now %d clients connected",
-				newClient.localAddress.toAddrString(),
-				clients.length
+				"%s connected to the server, now %d clients connected and %d IPs connected",
+				newClientSocket.remoteAddress.toAddrString(),
+				clients.length, GetConnectedIPs()
 			);
 		}
 
@@ -239,6 +277,11 @@ class Server {
 					const ulong size = CToSPacketSize.SetBlock;
 					if (client.inBuffer.length < size) {
 						continue;
+					}
+
+					if (GetTicks() - client.ticksAtLastBlockUpdate < 20) {
+						KickPlayer(client.username, "Kicked by antigrief, slow down");
+						return;
 					}
 
 					auto packet = new CToS_SetBlock(client.inBuffer[0 .. size]);

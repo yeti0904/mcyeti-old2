@@ -251,3 +251,14 @@ byte[] SToC_Message(string message) {
 
 	return ret;
 }
+
+byte[] SToC_DisconnectPlayer(string reason) {
+	byte[] ret;
+	
+	ret ~= SToCPacketID.Disconnect;
+	ret ~= BytesFromString(reason);
+
+	assert(ret.length == SToCPacketSize.DisconnectPlayer);
+
+	return ret;
+}

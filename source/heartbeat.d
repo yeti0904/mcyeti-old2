@@ -14,7 +14,7 @@ void DoHeartbeat(Server server) {
 	    server.config.heartbeatURL,
 	    encodeComponent(server.config.name),
 	    server.config.port,
-	    server.clients.length,
+	    server.GetConnectedIPs(),
 	    server.config.maxPlayers,
 	    server.config.publicServer? "true" : "false"
 	);
