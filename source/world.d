@@ -41,7 +41,7 @@ class World {
 				return entity.id;
 			}
 		}
-		return 0;
+		return 255;
 	}
 
 	bool ValidBlock(short x, short y, short z) {

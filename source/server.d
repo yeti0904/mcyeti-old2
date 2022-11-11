@@ -125,7 +125,7 @@ class Server {
 
 						clients[j].socket.send(
 							SToC_DespawnPlayer(clients[i].world.GetPlayerID(
-								clients[j].username)
+								clients[i].username)
 							)
 						);
 					}
