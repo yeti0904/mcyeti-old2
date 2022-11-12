@@ -10,6 +10,7 @@ import world;
 import serverConfig;
 import types;
 import tickCounter;
+import worldFile;
 
 struct Client {
 	Socket  socket;
@@ -63,9 +64,14 @@ class Server {
 		socket.listen(10);
 		Util_Log("Running server on port %s", config.port);
 
-		loadedWorlds ~= new World();
-		loadedWorlds[0].Generate("main", 128, 128, 128);
-		Util_Log("Generated world %s", loadedWorlds[0].name);
+		if (exists(dirName(thisExePath()) ~ "/worlds/main")) {
+			LoadWorld("main");
+		}
+		else {
+			loadedWorlds ~= new World();
+			loadedWorlds[0].Generate("main", 64, 64, 64);
+			Util_Log("Generated world %s", loadedWorlds[0].name);
+		}
 	}
 
 	void LoadConfig() {
@@ -116,6 +122,35 @@ class Server {
 		else {
 			SendMessageToClient(client, "&cWorld is full");
 		}
+	}
+
+	bool WorldLoaded(string name) {
+		foreach (world ; loadedWorlds) {
+			if (world.name == name) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	void AutoSaveWorlds() {
+		foreach (world ; loadedWorlds) {
+			world.Save();
+		}
+		SendGlobalMessage("Done autosave on loaded levels");
+	}
+
+	void LoadWorld(string name) {
+		if (WorldLoaded(name)) {
+			return;
+		}
+	
+		string fname  = dirName(thisExePath()) ~ "/worlds/" ~ name;
+		World  world  = worldFile.LoadWorld(fname);
+		world.name    = baseName(fname);
+		loadedWorlds ~= world;
+
+		SendGlobalMessage("Loaded world " ~ name);
 	}
 
 	void SendBlockUpdatesToWorld(string worldName, short x, short y, short z, byte block) {

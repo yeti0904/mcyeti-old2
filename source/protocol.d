@@ -147,7 +147,7 @@ byte[] SToC_SendWorld(World world) {
 	toSend ~= SToCPacketID.LevelInitialise;
 
 	// send chunks of data
-	ubyte[] data = world.Serialise();
+	ubyte[] data = world.Serialise(true);
 	bool    finished = false;
 	size_t  bytesSent = 0;
 	while (!finished) {

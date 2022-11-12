@@ -14,3 +14,4 @@ mcyeti-test-*
 *.obj
 *.lst
 server.json
+worlds

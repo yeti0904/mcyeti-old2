@@ -1,10 +1,13 @@
 import std.stdio;
+import std.file;
+import std.path;
 import std.zlib;
 import std.bitmanip;
 import std.algorithm;
 import server;
 import types;
 import protocol;
+import worldFile;
 
 struct WorldEntity {
 	ubyte id;
@@ -138,9 +141,13 @@ class World {
 		spawnPoint = Vec3(w / 2, (h / 2) + 1, l / 2);
 	}
 
-	ubyte[] Serialise() {
+	ubyte[] Serialise(bool forClient) {
 		ubyte[] serialised;
-		serialised ~= nativeToBigEndian(cast(uint) (w * h * l));
+		
+		if (forClient) {
+			serialised ~= nativeToBigEndian(cast(uint) (w * h * l));
+		}
+		
 		for (short y = 0; y < h; ++y) {
 			for (short z = 0; z < l; ++z) {
 				for (short x = 0; x < w; ++x) {
@@ -149,13 +156,43 @@ class World {
 			}
 		}
 
-		auto compressor  = new Compress(HeaderFormat.gzip);
-		auto compressed  = compressor.compress(serialised);
-		compressed      ~= compressor.flush();
-		return cast(ubyte[]) compressed;
+		if (forClient) {
+			auto compressor  = new Compress(HeaderFormat.gzip);
+			auto compressed  = compressor.compress(serialised);
+			compressed      ~= compressor.flush();
+			return cast(ubyte[]) compressed;
+		}
+		else {
+			return serialised;
+		}
+	}
+
+	bool FromBlocksArray(ubyte[] data) {
+		if (data.length != w * h * l) {
+			return false;
+		}
+		blocks     = new ubyte[][][](w, h, l);
+		spawnPoint = Vec3(w / 2, (h / 2) + 1, l / 2);
+
+		size_t i;
+		for (short y = 0; y < h; ++y) {
+			for (short z = 0; z < l; ++z) {
+				for (short x = 0; x < w; ++x, ++i) {
+					blocks[z][y][x] = data[i];
+				}
+			}
+		}
+
+		return true;
 	}
 
 	size_t Volume() {
 		return w * h * l;
+	}
+
+	void Save() {
+		string fname = dirName(thisExePath()) ~ "/worlds/" ~ name;
+
+		WriteWorld(fname, this);
 	}
 }
