@@ -27,7 +27,7 @@ void main() {
 		if (GetTicks() % 20 == 0) {
 			server.KickDisconnectedClients();
 		}
-		if (GetTicks() % 500 == 0) {
+		if (GetTicks() % 120000 == 0) {
 			server.AutoSaveWorlds();
 		}
 		
