@@ -302,6 +302,9 @@ class Server {
 					auto packet = new CToS_PlayerIdentification(
 						client.inBuffer[0 .. size]
 					);
+
+					KickPlayer(packet.username, "(Reconnecting from a different IP)");
+					
 					client.username      = packet.username;
 					client.authenticated = true;
 

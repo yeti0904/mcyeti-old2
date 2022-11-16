@@ -14,8 +14,6 @@ World LoadWorld(string fileName) {
 
 	ubyte[] levelData = file.rawRead(new ubyte[xSize * ySize * zSize]);
 
-	writeln(levelData.length);
-
 	ret.w = xSize;
 	ret.h = ySize;
 	ret.l = zSize;
